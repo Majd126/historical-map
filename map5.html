@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дневник Разведчицы: Путь Софьи Аверичевой</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --accent-color: #d32f2f; /* Soviet Red */
+            --text-color: #2c2c2c;
+            --bg-color: #f4f1ea; /* Paper/Sepia tone */
+            --card-bg: #ffffff;
+            --sidebar-width: 350px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Merriweather', serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .story-container {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            height: 100%;
+            overflow-y: scroll;
+            padding: 0;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            position: relative;
+            background: var(--bg-color);
+            scroll-behavior: smooth;
+        }
+
+        .story-container::-webkit-scrollbar { width: 8px; }
+        .story-container::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+
+        .header-section {
+            padding: 40px 30px;
+            background: #222;
+            color: #fff;
+            text-align: center;
+        }
+        .header-section h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.8em;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header-section p { font-size: 0.9em; opacity: 0.8; font-style: italic; }
+
+        .chapter {
+            padding: 40px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            opacity: 0.4;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chapter.active {
+            opacity: 1;
+            transform: scale(1.02);
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .location-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.4em;
+            font-weight: 800;
+            margin: 0 0 15px 0;
+            color: #1a1a1a;
+            line-height: 1.2;
+        }
+
+        .quote-box {
+            border-left: 3px solid var(--accent-color);
+            padding-left: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            font-size: 0.95em;
+            color: #555;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .context-text { font-size: 0.9em; line-height: 1.6; color: #444; }
+
+        .map-container { flex-grow: 1; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; }
+        /* Vintage Map Filter */
+        .leaflet-layer { filter: sepia(30%) contrast(95%) grayscale(20%); }
+
+        .map-label {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            color: #444;
+            text-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white;
+        }
+
+        .custom-pin div { transition: all 0.3s ease; }
+        .number-badge {
+            width: 24px;
+            height: 24px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column-reverse; }
+            .story-container { width: 100%; height: 50%; }
+            .map-container { height: 50%; }
+            .chapter { min-height: auto; padding: 40px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="story-container" id="story-feed">
+        <div class="header-section">
+            <h1>Дневник Разведчицы</h1>
+            <p>Боевой путь Аверичевой Софьи Петровны<br>1942–1943</p>
+        </div>
+        <div id="chapters-wrapper"></div>
+        <div style="height: 50vh;"></div>
+    </div>
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Include Leaflet GeometryUtil for fallback curves (optional but good practice, here we simulate) -->
+
+<script>
+    // --- DATA ---
+    const diaryData = [
+      {
+        "location": "Деревня Никулино",
+        "date": "1942-07-11",
+        "quote": "Михаил Голубев и почтальон Саня Травкин повели нас в деревню Никулино",
+        "context": "Место первоначальной дислокации дивизии.",
+        "coords": [54.60208, 31.55888]
+      },
+      {
+        "location": "Грядозубово",
+        "date": "16 июля 1942",
+        "quote": "...Докукин вернулся в деревню Грядозубово…",
+        "context": "Эта деревня стала базой для разведроты лейтенанта Докукина.",
+        "coords": [55.54944, 32.22]
+      },
+      {
+        "location": "Деревня Баушкино",
+        "date": "17-18 июля 1942",
+        "quote": "Утром, когда подходили к деревне Баушкино…",
+        "context": "Находилась в непосредственной близости к передовой.",
+        "coords": [55.60538, 32.33543]
+      },
+      {
+        "location": "Свитский Мох",
+        "date": "24-27 июля 1942",
+        "quote": "«Получено задание: взять контрольного пленного на большаке...»",
+        "context": "Обширный торфяник и болото.",
+        "coords": [55.65, 32.71916]
+      },
+      {
+        "location": "Деревня Зазерье",
+        "date": "5 августа 1942",
+        "quote": "«Занята деревня Зазерье. Бой удалялся...»",
+        "context": "Описание непосредственного боевого столкновения.",
+        "coords": [55.03071, 31.16853]
+      },
+      {
+        "location": "Грядозубово",
+        "date": "26 августа 1942",
+        "quote": "«Мы снова в деревне Грядозубово.»",
+        "context": "Запись построена на контрасте между тяжелой фронтовой работой и коротким домашним уютом.",
+        "coords": [55.54944, 32.22]
+      },
+      {
+        "location": "Деревня Новоселки",
+        "date": "28 августа 1942",
+        "quote": "«Неподалеку от нас, около начисто выжженной...»",
+        "context": "Место для засад.",
+        "coords": [54.96682, 31.64089]
+      },
+      {
+        "location": "Грядозубово (Окрестности)",
+        "date": "28 августа 1942",
+        "quote": "Подходим к деревне Грядозубово. Рома притих...",
+        "context": "Наблюдательная миссия в лесах.",
+        "coords": [55.54944, 32.22]
+      },
+      {
+        "location": "Деревня Никулино",
+        "date": "1 сентября 1942",
+        "quote": "«Нас отзывали в Никулино на отдых.»",
+        "context": "Рота вернулась на базу в Никулино.",
+        "coords": [54.60208, 31.55888]
+      },
+      {
+        "location": "Грядозубово",
+        "date": "7 сентября 1942",
+        "quote": "7-го сентября появились всей ротой в Грядозубове.",
+        "context": "Тревожная запись. Ей подбросили письмо с угрозами.",
+        "coords": [55.54944, 32.22]
+      },
+      {
+        "location": "Село Рибшево",
+        "date": "18 сентября 1942",
+        "quote": "«...через Лосево, Алексеевку, село Рибшево...»",
+        "context": "Стратегически важный пункт на границе партизанского края.",
+        "coords": [55.42406, 32.1203]
+      },
+      {
+        "location": "Деревня Борки",
+        "date": "20 сентября 1942",
+        "quote": "Вчера днем мы наблюдали за деревней Борки.",
+        "context": "Наблюдательная миссия.",
+        "coords": [55.342043, 31.060239]
+      },
+      {
+        "location": "Деревня Попково",
+        "date": "14 ноября 1942",
+        "quote": "«Когда шли через деревню Попково...»",
+        "context": "Здесь располагался штаб дивизии.",
+        "coords": [55.6464, 32.44588]
+      },
+      {
+        "location": "Деревня Берлезово",
+        "date": "25 февраля 1943",
+        "quote": "«25 февраля в районе деревни Берлезово...»",
+        "context": "Канун немецкого отступления.",
+        "coords": [55.65571, 32.56586]
+      },
+      {
+        "location": "г. Белый",
+        "date": "22 марта 1943",
+        "quote": "«Очищена от противника шоссейная дорога от г. Белого...»",
+        "context": "Город-крепость немецкой обороны.",
+        "coords": [55.83378, 32.93898]
+      }
+    ];
+
+    // Initialize Map
+    var map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([55.5, 32.0], 9);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const chaptersWrapper = document.getElementById('chapters-wrapper');
+    const markers = [];
+    
+    // The main Polyline
+    const activeLine = L.polyline([], {
+        color: '#d32f2f', weight: 4, opacity: 0.8, lineCap: 'round', lineJoin: 'round'
+    }).addTo(map);
+
+    // --- SMART ROUTING SYSTEM ---
+    const routeCache = {};
+    
+    // Fallback: Generate a simple Bezier curve point between two coords
+    // This makes straight lines look like curved flight paths or approximate roads
+    function getCurvedPath(start, end) {
+        const lat1 = start[0], lon1 = start[1];
+        const lat2 = end[0], lon2 = end[1];
+        
+        // Midpoint with offset
+        const midLat = (lat1 + lat2) / 2;
+        const midLon = (lon1 + lon2) / 2;
+        
+        // Add a slight curve offset based on distance
+        const dist = Math.sqrt(Math.pow(lat2-lat1, 2) + Math.pow(lon2-lon1, 2));
+        const offset = dist * 0.1; // 10% curve
+        
+        return [
+            start,
+            [midLat + offset, midLon - offset], // Control point approximation
+            end
+        ];
+    }
+
+    // Function to fetch real route from OSRM
+    async function fetchRoute(startIdx, endIdx) {
+        const cacheKey = `${startIdx}-${endIdx}`;
+        if (routeCache[cacheKey]) return routeCache[cacheKey];
+
+        const start = diaryData[startIdx].coords;
+        const end = diaryData[endIdx].coords;
+        
+        // Use HTTPS and overview=full
+        const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+
+        try {
+            const response = await fetch(url, { method: 'GET' });
+            if (!response.ok) throw new Error("Network response was not ok");
+            
+            const data = await response.json();
+            if (data.code === 'Ok') {
+                const route = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                routeCache[cacheKey] = route;
+                return route;
+            }
+        } catch (e) {
+            console.warn(`Routing failed for segment ${startIdx}-${endIdx}, using fallback curve.`);
+        }
+        
+        // Fallback to curved line if API fails
+        const curved = getCurvedPath(start, end);
+        routeCache[cacheKey] = curved;
+        return curved;
+    }
+
+    // Load routes progressively
+    async function loadAllRoutes() {
+        for (let i = 0; i < diaryData.length - 1; i++) {
+            // Fetch and cache
+            await fetchRoute(i, i+1);
+            
+            // If this segment is currently visible, trigger a redraw
+            const currentActiveIndex = parseInt(document.querySelector('.chapter.active')?.id.split('-')[1] || 0);
+            if (currentActiveIndex > i) {
+                updatePolyline(currentActiveIndex);
+            }
+            
+            // Delay to prevent rate limiting (critical for free API)
+            await new Promise(r => setTimeout(r, 800)); 
+        }
+    }
+    
+    // Start loading
+    loadAllRoutes();
+
+    // --- UI HELPERS ---
+    function createInactiveIcon() {
+        return L.divIcon({
+            className: 'custom-pin',
+            html: '<div style="background-color: #666; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>',
+            iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+    }
+
+    function createActiveNumberedIcon(number) {
+        return L.divIcon({
+            className: 'custom-pin-active',
+            html: `<div class="number-badge">${number}</div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14]
+        });
+    }
+
+    // Render Chapters
+    diaryData.forEach((entry, index) => {
+        const chapterDiv = document.createElement('div');
+        chapterDiv.className = 'chapter';
+        chapterDiv.id = 'chapter-' + index;
+        chapterDiv.innerHTML = `
+            <span class="date-badge">${entry.date}</span>
+            <h2 class="location-title">${entry.location}</h2>
+            <div class="quote-box">${entry.quote}</div>
+            <p class="context-text">${entry.context}</p>
+        `;
+        chaptersWrapper.appendChild(chapterDiv);
+
+        const marker = L.marker(entry.coords, {icon: createInactiveIcon()}).addTo(map);
+        marker.bindTooltip(entry.location, {
+            permanent: true, direction: 'right', className: 'map-label', offset: [10, 0]
+        });
+        markers.push(marker);
+    });
+
+    // Observer for Scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = parseInt(entry.target.id.split('-')[1]);
+                activateChapter(id);
+            }
+        });
+    }, { root: document.querySelector('.story-container'), rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+    document.querySelectorAll('.chapter').forEach(chapter => observer.observe(chapter));
+
+    // Update the Line
+    async function updatePolyline(index) {
+        let fullPath = [];
+        for (let i = 0; i < index; i++) {
+            // Check cache or generate temporary straight/curved line immediately if missing
+            const segment = routeCache[`${i}-${i+1}`] || getCurvedPath(diaryData[i].coords, diaryData[i+1].coords);
+            fullPath = fullPath.concat(segment);
+        }
+        activeLine.setLatLngs(fullPath);
+    }
+
+    function activateChapter(index) {
+        // Highlight Sidebar
+        document.querySelectorAll('.chapter').forEach(c => c.classList.remove('active'));
+        document.getElementById('chapter-' + index).classList.add('active');
+
+        // Highlight Markers
+        markers.forEach((m, i) => {
+            if (i === index) {
+                m.setIcon(createActiveNumberedIcon(index + 1));
+                m.setZIndexOffset(1000);
+            } else {
+                m.setIcon(createInactiveIcon());
+                m.setZIndexOffset(0);
+            }
+        });
+
+        // Update Line
+        updatePolyline(index);
+
+        // Fly to Location
+        map.flyTo(diaryData[index].coords, 10, { animate: true, duration: 1.5 });
+    }
+</script>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); }
+        70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+    }
+</style>
+
+</body>
+</html>
