@@ -7,113 +7,372 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet Routing Machine CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
+        /* --- THEME VARIABLES --- */
         :root {
-            --accent-color: #d32f2f; /* Soviet Red */
-            --text-color: #2c2c2c;
-            --bg-color: #f4f1ea; /* Paper/Sepia tone */
-            --card-bg: #ffffff;
-            --sidebar-width: 350px;
+            /* Light Theme (Default) */
+            --accent-color: #d32f2f;
+            --text-main: #2c2c2c;
+            --text-secondary: #555;
+            --bg-body: #f4f1ea;
+            --bg-sidebar: #f4f1ea;
+            --bg-card: #ffffff;
+            --bg-header: #222;
+            --bg-quote: #f9f9f9;
+            --border-color: #e0e0e0;
+            --map-filter: sepia(30%) contrast(95%) grayscale(20%);
+            --label-color: #444;
+            --label-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white;
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Merriweather', serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
+        /* Dark Theme Overrides */
+        [data-theme="dark"] {
+            --text-main: #e0e0e0;
+            --text-secondary: #aaa;
+            --bg-body: #121212;
+            --bg-sidebar: #181818;
+            --bg-card: #242424;
+            --bg-header: #000000;
+            --bg-quote: #2a2a2a;
+            --border-color: #333;
+            /* Invert map colors to create a "Night Mode" */
+            --map-filter: invert(100%) hue-rotate(180deg) brightness(80%) contrast(90%);
+            --label-color: #fff;
+            --label-shadow: 1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000;
+        }
 
-        .container { display: flex; height: 100vh; }
-        .story-container { width: var(--sidebar-width); flex-shrink: 0; height: 100%; overflow-y: scroll; padding: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1000; position: relative; background: var(--bg-color); scroll-behavior: smooth; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Merriweather', serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Layout Container */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar (Story) */
+        .story-container {
+            width: 350px;
+            flex-shrink: 0;
+            height: 100%;
+            overflow-y: scroll;
+            padding: 0;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: relative;
+            background: var(--bg-sidebar);
+            scroll-behavior: smooth;
+            transition: background 0.3s;
+        }
+
         .story-container::-webkit-scrollbar { width: 8px; }
-        .story-container::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+        .story-container::-webkit-scrollbar-thumb { background-color: #888; border-radius: 4px; }
+        .story-container::-webkit-scrollbar-track { background: var(--bg-sidebar); }
 
-        .header-section { padding: 40px 30px; background: #222; color: #fff; text-align: center; }
-        .header-section h1 { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.8em; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
-        .header-section p { font-size: 0.9em; opacity: 0.8; font-style: italic; }
+        /* Header in Sidebar */
+        .header-section {
+            padding: 40px 30px;
+            background: var(--bg-header);
+            color: #fff;
+            text-align: center;
+            position: relative;
+            transition: background 0.3s;
+        }
+        
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--accent-color);
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
-        .chapter { padding: 40px 30px; border-bottom: 1px solid #e0e0e0; opacity: 0.4; transition: opacity 0.5s ease, transform 0.5s ease; min-height: 50vh; display: flex; flex-direction: column; justify-content: center; }
-        .chapter.active { opacity: 1; transform: scale(1.02); background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05); z-index: 10; }
+        .header-section h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.8em;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header-section p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            font-style: italic;
+        }
 
-        .date-badge { display: inline-block; background: var(--accent-color); color: white; font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.75em; padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; text-transform: uppercase; }
-        .location-title { font-family: 'Montserrat', sans-serif; font-size: 1.4em; font-weight: 800; margin: 0 0 15px 0; color: #1a1a1a; line-height: 1.2; }
-        .quote-box { border-left: 3px solid var(--accent-color); padding-left: 15px; margin: 15px 0; font-style: italic; font-size: 0.95em; color: #555; background: #f9f9f9; padding: 15px; border-radius: 0 8px 8px 0; }
-        .context-text { font-size: 0.9em; line-height: 1.6; color: #444; }
+        /* Toggle Switch Styling */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #666;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        .map-container { flex-grow: 1; height: 100%; position: relative; }
+        /* Story Chapters (Cards) */
+        .chapter {
+            padding: 40px 30px;
+            border-bottom: 1px solid var(--border-color);
+            opacity: 0.4;
+            transition: all 0.5s ease;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chapter.active {
+            opacity: 1;
+            transform: scale(1.02);
+            background: var(--bg-card);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .location-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.4em;
+            font-weight: 800;
+            margin: 0 0 15px 0;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .quote-box {
+            border-left: 3px solid var(--accent-color);
+            padding-left: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            font-size: 0.95em;
+            color: var(--text-secondary);
+            background: var(--bg-quote);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .context-text {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        /* Map Container */
+        .map-container {
+            flex-grow: 1;
+            height: 100%;
+            position: relative;
+            background: #ddd; /* Placeholder color while loading */
+        }
+
         #map { width: 100%; height: 100%; }
-        .leaflet-layer { filter: sepia(30%) contrast(95%) grayscale(20%); }
 
-        .map-label { background: transparent; border: none; box-shadow: none; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; color: #444; text-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white; }
+        /* Map Filter (Theme applied here) */
+        .leaflet-tile-pane {
+            filter: var(--map-filter);
+            transition: filter 0.5s ease;
+        }
+
+        /* Map Labels */
+        .map-label {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--label-color);
+            text-shadow: var(--label-shadow);
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+
+        /* Custom Pins */
         .custom-pin div { transition: all 0.3s ease; }
-        .number-badge { width: 24px; height: 24px; background-color: var(--accent-color); color: white; border-radius: 50%; text-align: center; line-height: 24px; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 14px; border: 2px solid white; box-shadow: 0 0 10px rgba(211, 47, 47, 0.6); animation: pulse 2s infinite; }
+        
+        .number-badge {
+            width: 24px;
+            height: 24px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
+            animation: pulse 2s infinite;
+        }
 
-        /* Hide standard routing control UI */
-        .leaflet-routing-container { display: none !important; }
-
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .container { flex-direction: column-reverse; }
             .story-container { width: 100%; height: 50%; }
             .map-container { height: 50%; }
             .chapter { min-height: auto; padding: 40px 20px; }
+            .header-section h1 { font-size: 1.5em; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Left Side: Story Feed -->
     <div class="story-container" id="story-feed">
         <div class="header-section">
+            <img src="https://corpus.prozhito.org/pictures/persons/268/preview_140x175.png?1714508225" alt="Софья Аверичева" class="profile-photo">
+            
             <h1>Дневник Разведчицы</h1>
-            <p>Боевой путь Аверичевой Софьи Петровны<br>1942–1943</p>
+            <p>Боевой путь Аверичевой Софьи Петровны<br>1942–1943<br>Работа: Валеевой Алтынай</p>
+
+            <!-- TOGGLE SWITCH -->
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <span>Темный режим</span>
+            </div>
         </div>
+
         <div id="chapters-wrapper"></div>
-        <div style="height: 50vh;"></div>
+        <div style="height: 50vh;"></div> <!-- Spacer at bottom -->
     </div>
+
+    <!-- Right Side: Map -->
     <div class="map-container">
         <div id="map"></div>
     </div>
 </div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
 <script>
+    // --- THEME LOGIC ---
+    const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+    const currentTheme = localStorage.getItem('theme');
+
+    // 1. Check for saved user preference
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 2. Handle Switch Function
+    function switchTheme(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    toggleSwitch.addEventListener('change', switchTheme, false);
+
+
+    // --- DATA ---
     const diaryData = [
       {
         "location": "Деревня Никулино",
-        "date": "1942-07-11",
+        "date": "11 июля 1942",
         "quote": "Михаил Голубев и почтальон Саня Травкин повели нас в деревню Никулино",
-        "context": "Место первоначальной дислокации дивизии.",
+        "context": "Место первоначальной дислокации дивизии. Запись отражает период прибытия и обустройства свежих частей на фронте, вхождения в быт войны.",
         "coords": [54.60208, 31.55888]
       },
       {
         "location": "Грядозубово",
         "date": "16 июля 1942",
         "quote": "...Докукин вернулся в деревню Грядозубово…",
-        "context": "Эта деревня стала базой для разведроты лейтенанта Докукина.",
+        "context": "Эта деревня стала базой для разведроты лейтенанта Докукина. В дневнике она описывается как место передышки между рейдами.",
         "coords": [55.54944, 32.22]
       },
       {
         "location": "Деревня Баушкино",
         "date": "17-18 июля 1942",
         "quote": "Утром, когда подходили к деревне Баушкино…",
-        "context": "Находилась в непосредственной близости к передовой.",
+        "context": "Находилась в непосредственной близости к передовой. Эпизод описывает взаимодействие армии с местным населением.",
         "coords": [55.60538, 32.33543]
       },
       {
         "location": "Свитский Мох",
         "date": "24-27 июля 1942",
-        "quote": "«Получено задание: взять контрольного пленного на большаке...»",
-        "context": "Обширный торфяник и болото.",
+        "quote": "«Получено задание: взять контрольного пленного на большаке в районе Свитского Мха...»",
+        "context": "Обширный торфяник и болото. Контекст записи мрачный: разведчики идут по местам былых боев.",
         "coords": [55.65, 32.71916]
       },
       {
         "location": "Деревня Зазерье",
         "date": "5 августа 1942",
-        "quote": "«Занята деревня Зазерье. Бой удалялся...»",
-        "context": "Описание непосредственного боевого столкновения.",
+        "quote": "«Занята деревня Зазерье. Бой удалялся. Догорали подорванные танки.»",
+        "context": "Описание непосредственного боевого столкновения. Разведчики захватили немецкие укрепления.",
         "coords": [55.03071, 31.16853]
       },
       {
@@ -126,35 +385,35 @@
       {
         "location": "Деревня Новоселки",
         "date": "28 августа 1942",
-        "quote": "«Неподалеку от нас, около начисто выжженной...»",
-        "context": "Место для засад.",
+        "quote": "«Неподалеку от нас, около начисто выжженной, не существующей сейчас деревни Новоселки...»",
+        "context": "Место для засад. Используя высокую рожь и лес, разведчики охотились на немецкие патрули.",
         "coords": [54.96682, 31.64089]
       },
       {
         "location": "Грядозубово (Окрестности)",
         "date": "28 августа 1942",
-        "quote": "Подходим к деревне Грядозубово. Рома притих...",
-        "context": "Наблюдательная миссия в лесах.",
+        "quote": "Подходим к деревне Грядозубово. Рома притих, он уже не стонет.",
+        "context": "Наблюдательная миссия в лесах. Солдаты лежат на опушке, едят чернику.",
         "coords": [55.54944, 32.22]
       },
       {
         "location": "Деревня Никулино",
         "date": "1 сентября 1942",
         "quote": "«Нас отзывали в Никулино на отдых.»",
-        "context": "Рота вернулась на базу в Никулино.",
+        "context": "Рота вернулась на базу в Никулино. Автор отмечает первый день осени.",
         "coords": [54.60208, 31.55888]
       },
       {
         "location": "Грядозубово",
         "date": "7 сентября 1942",
         "quote": "7-го сентября появились всей ротой в Грядозубове.",
-        "context": "Тревожная запись. Ей подбросили письмо с угрозами.",
+        "context": "Тревожная запись. Ей подбросили письмо с угрозами от полицая.",
         "coords": [55.54944, 32.22]
       },
       {
         "location": "Село Рибшево",
         "date": "18 сентября 1942",
-        "quote": "«...через Лосево, Алексеевку, село Рибшево...»",
+        "quote": "«...через Лосево, Алексеевку, село Рибшево до района Николы-Полоши...»",
         "context": "Стратегически важный пункт на границе партизанского края.",
         "coords": [55.42406, 32.1203]
       },
@@ -162,111 +421,65 @@
         "location": "Деревня Борки",
         "date": "20 сентября 1942",
         "quote": "Вчера днем мы наблюдали за деревней Борки.",
-        "context": "Наблюдательная миссия.",
+        "context": "Наблюдательная миссия. Разведчики сутками следили за бытом оккупантов.",
         "coords": [55.342043, 31.060239]
       },
       {
         "location": "Деревня Попково",
         "date": "14 ноября 1942",
         "quote": "«Когда шли через деревню Попково...»",
-        "context": "Здесь располагался штаб дивизии.",
+        "context": "Здесь располагался штаб дивизии. Контекст переключается на внутреннюю жизнь армии.",
         "coords": [55.6464, 32.44588]
       },
       {
         "location": "Деревня Берлезово",
         "date": "25 февраля 1943",
         "quote": "«25 февраля в районе деревни Берлезово...»",
-        "context": "Канун немецкого отступления.",
+        "context": "Канун немецкого отступления. Описываются ожесточенные артдуэли.",
         "coords": [55.65571, 32.56586]
       },
       {
         "location": "г. Белый",
         "date": "22 марта 1943",
         "quote": "«Очищена от противника шоссейная дорога от г. Белого...»",
-        "context": "Город-крепость немецкой обороны.",
+        "context": "Город-крепость немецкой обороны, освобожденный 10 марта 1943 года.",
         "coords": [55.83378, 32.93898]
       }
     ];
 
-    // --- MAP SETUP ---
-    var map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([55.5, 32.0], 9);
+    // --- MAP INITIALIZATION ---
+    var map = L.map('map', {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: false
+    }).setView([55.5, 32.0], 9);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: ''
     }).addTo(map);
 
+
+    // --- RENDER CONTENT ---
     const chaptersWrapper = document.getElementById('chapters-wrapper');
     const markers = [];
-
-    // --- ROUTING IMPLEMENTATION ---
-    // We will use a single routing control that gets updated dynamically
-    // BUT since we want to show the "past" path, we need to accumulate waypoints.
     
-    // Create a Routing Control but don't add it to the map visibly yet
-    // We will use L.Routing.osrmv1 which handles the API calls
-    const router = L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1', // HTTPS is CRITICAL for Vercel
-        profile: 'driving'
-    });
-
-    // We will draw the path manually using a Polyline to have full control over style
+    // Create the Polyline object
     const activeLine = L.polyline([], {
         color: '#d32f2f', 
-        weight: 4, 
-        opacity: 0.8, 
-        lineCap: 'round', 
-        lineJoin: 'round'
+        weight: 3,
+        opacity: 0.8,
+        dashArray: '5, 10',
+        lineCap: 'round',
+        smoothFactor: 1
     }).addTo(map);
 
-    // Cache for calculated routes to avoid hitting API repeatedly
-    const routeCache = {}; 
-
-    async function calculateSegment(start, end, cacheKey) {
-        if (routeCache[cacheKey]) return routeCache[cacheKey];
-
-        return new Promise((resolve) => {
-            router.route([
-                L.Routing.waypoint(L.latLng(start)),
-                L.Routing.waypoint(L.latLng(end))
-            ], (err, routes) => {
-                if (!err && routes && routes.length > 0) {
-                    const line = routes[0].coordinates; // Array of L.LatLng
-                    routeCache[cacheKey] = line;
-                    resolve(line);
-                } else {
-                    console.warn("Routing error", err);
-                    // Fallback to straight line
-                    resolve([L.latLng(start), L.latLng(end)]);
-                }
-            });
-        });
-    }
-
-    // Function to update the main path based on current index
-    async function updatePath(index) {
-        let fullLatLngs = [];
-        
-        // We calculate segments sequentially
-        // For performance, we only want to calculate what's needed.
-        // We will build the path from segment 0 to 'index'
-        for (let i = 0; i < index; i++) {
-            const start = diaryData[i].coords;
-            const end = diaryData[i+1].coords;
-            const key = `${i}-${i+1}`;
-            
-            const segmentCoords = await calculateSegment(start, end, key);
-            fullLatLngs = fullLatLngs.concat(segmentCoords);
-        }
-
-        activeLine.setLatLngs(fullLatLngs);
-    }
-
-    // --- MARKERS & UI ---
+    // 1. Icon Functions 
     function createInactiveIcon() {
         return L.divIcon({
             className: 'custom-pin',
             html: '<div style="background-color: #666; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>',
-            iconSize: [16, 16], iconAnchor: [8, 8]
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
         });
     }
 
@@ -274,11 +487,14 @@
         return L.divIcon({
             className: 'custom-pin-active',
             html: `<div class="number-badge">${number}</div>`,
-            iconSize: [28, 28], iconAnchor: [14, 14]
+            iconSize: [28, 28], 
+            iconAnchor: [14, 14]
         });
     }
 
+    // Generate Chapters and Markers
     diaryData.forEach((entry, index) => {
+        // 1. Create HTML Chapter
         const chapterDiv = document.createElement('div');
         chapterDiv.className = 'chapter';
         chapterDiv.id = 'chapter-' + index;
@@ -290,46 +506,69 @@
         `;
         chaptersWrapper.appendChild(chapterDiv);
 
+        // 2. Create Map Marker
         const marker = L.marker(entry.coords, {icon: createInactiveIcon()}).addTo(map);
+        
+        // Add permanent label
         marker.bindTooltip(entry.location, {
-            permanent: true, direction: 'right', className: 'map-label', offset: [10, 0]
+            permanent: true, 
+            direction: 'right', 
+            className: 'map-label',
+            offset: [10, 0]
         });
+
         markers.push(marker);
     });
+
+    // --- INTERACTION LOGIC ---
+    const observerOptions = {
+        root: document.querySelector('.story-container'),
+        rootMargin: '-40% 0px -40% 0px',
+        threshold: 0
+    };
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const id = parseInt(entry.target.id.split('-')[1]);
-                activateChapter(id);
+                const id = entry.target.id.split('-')[1]; // Get index
+                activateChapter(parseInt(id));
             }
         });
-    }, { root: document.querySelector('.story-container'), rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    }, observerOptions);
 
-    document.querySelectorAll('.chapter').forEach(chapter => observer.observe(chapter));
+    document.querySelectorAll('.chapter').forEach(chapter => {
+        observer.observe(chapter);
+    });
 
     function activateChapter(index) {
+        // 1. Highlight Sidebar
         document.querySelectorAll('.chapter').forEach(c => c.classList.remove('active'));
         document.getElementById('chapter-' + index).classList.add('active');
 
+        // 2. Update Map Markers
         markers.forEach((m, i) => {
             if (i === index) {
+                // Active Marker gets a Number
                 m.setIcon(createActiveNumberedIcon(index + 1));
                 m.setZIndexOffset(1000);
             } else {
+                // Inactive Marker reverts to Dot
                 m.setIcon(createInactiveIcon());
                 m.setZIndexOffset(0);
             }
         });
 
-        // Update routing path
-        updatePath(index);
+        // 3. Update the Polyline
+        const currentPath = diaryData.slice(0, index + 1).map(d => d.coords);
+        activeLine.setLatLngs(currentPath);
 
-        map.flyTo(diaryData[index].coords, 10, { animate: true, duration: 1.5 });
+        // 4. Fly to Location
+        const targetCoords = diaryData[index].coords;
+        map.flyTo(targetCoords, 11, {
+            animate: true,
+            duration: 1.5
+        });
     }
-
-    // Pre-load the first segment immediately to look responsive
-    updatePath(0);
 
 </script>
 
