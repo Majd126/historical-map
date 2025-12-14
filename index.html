@@ -25,8 +25,14 @@
             --bg-quote: #f9f9f9;
             --border-color: #e0e0e0;
             --map-filter: sepia(30%) contrast(95%) grayscale(20%);
-            --label-color: #444;
-            --label-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white;
+            --label-color: #333;
+            --label-shadow: 2px 2px 0px white;
+            
+            /* Category Colors */
+            --col-battle: #d32f2f; /* Red */
+            --col-base: #2e7d32;   /* Green */
+            --col-recon: #1565c0;  /* Blue */
+            --col-move: #e65100;   /* Orange */
         }
 
         /* Dark Theme Overrides */
@@ -39,10 +45,14 @@
             --bg-header: #000000;
             --bg-quote: #2a2a2a;
             --border-color: #333;
-            /* Invert map colors to create a "Night Mode" */
             --map-filter: invert(100%) hue-rotate(180deg) brightness(80%) contrast(90%);
             --label-color: #fff;
-            --label-shadow: 1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000;
+            --label-shadow: 2px 2px 0px #000;
+            
+            --col-battle: #ff5252;
+            --col-base: #66bb6a;
+            --col-recon: #448aff;
+            --col-move: #ff9800;
         }
 
         body, html {
@@ -64,7 +74,7 @@
 
         /* Sidebar (Story) */
         .story-container {
-            width: 350px;
+            width: 380px; 
             flex-shrink: 0;
             height: 100%;
             overflow-y: scroll;
@@ -107,10 +117,10 @@
         .header-section h1 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
-            font-size: 1.8em;
+            font-size: 1.6em;
             margin: 0 0 10px 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
         .header-section p {
             font-size: 0.9em;
@@ -123,7 +133,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 15px;
+            margin-top: 20px;
             font-family: 'Montserrat', sans-serif;
             font-size: 0.8em;
             opacity: 0.9;
@@ -164,7 +174,7 @@
             border-bottom: 1px solid var(--border-color);
             opacity: 0.4;
             transition: all 0.5s ease;
-            min-height: 50vh;
+            min-height: 40vh; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -176,24 +186,35 @@
             background: var(--bg-card);
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             z-index: 10;
+            border-left: 5px solid var(--accent-color);
         }
 
         .date-badge {
             display: inline-block;
-            background: var(--accent-color);
+            background: #444;
             color: white;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
             font-size: 0.75em;
             padding: 4px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             margin-bottom: 10px;
             text-transform: uppercase;
+            align-self: flex-start;
+        }
+
+        .category-tag {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-left: 10px;
+            color: var(--text-secondary);
         }
 
         .location-title {
             font-family: 'Montserrat', sans-serif;
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 800;
             margin: 0 0 15px 0;
             color: var(--text-main);
@@ -224,50 +245,91 @@
             flex-grow: 1;
             height: 100%;
             position: relative;
-            background: #ddd; /* Placeholder color while loading */
+            background: #ddd; 
         }
 
         #map { width: 100%; height: 100%; }
 
-        /* Map Filter (Theme applied here) */
         .leaflet-tile-pane {
             filter: var(--map-filter);
             transition: filter 0.5s ease;
         }
 
-        /* Map Labels */
+        /* --- MARKER STYLES --- */
         .map-label {
-            background: transparent;
-            border: none;
-            box-shadow: none;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 12px;
+            font-weight: 800;
+            font-size: 13px;
             color: var(--label-color);
             text-shadow: var(--label-shadow);
             transition: color 0.3s, text-shadow 0.3s;
         }
-
-        /* Custom Pins */
-        .custom-pin div { transition: all 0.3s ease; }
         
+        /* THIS IS THE FIX: Hides the little triangle glitch */
+        .map-label::before, .map-label::after {
+            display: none !important;
+            border: none !important;
+        }
+
+        /* Generic Marker Base */
+        .marker-pin {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        
+        /* Category Colors for Markers */
+        .pin-battle { background-color: var(--col-battle); }
+        .pin-base   { background-color: var(--col-base); }
+        .pin-recon  { background-color: var(--col-recon); }
+        .pin-move   { background-color: var(--col-move); }
+
+        /* Active Marker (Big Number) */
         .number-badge {
-            width: 24px;
-            height: 24px;
-            background-color: var(--accent-color);
+            width: 30px;
+            height: 30px;
+            /* Dynamic background set via JS */
+            background-color: var(--pin-color);
             color: white;
             border-radius: 50%;
             text-align: center;
-            line-height: 24px;
+            line-height: 30px; /* Vertically centers text */
             font-family: 'Montserrat', sans-serif;
             font-weight: bold;
-            font-size: 14px;
-            border: 2px solid white;
-            box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
+            font-size: 16px;
+            border: 3px solid white;
+            box-shadow: 0 0 15px var(--pin-color);
             animation: pulse 2s infinite;
+            z-index: 1000;
         }
 
-        /* Mobile Responsiveness */
+        /* Legend Control */
+        .info.legend {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            color: var(--text-main);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 18px;
+            border: 1px solid var(--border-color);
+        }
+        .legend i {
+            width: 12px;
+            height: 12px;
+            float: left;
+            margin-right: 8px;
+            margin-top: 3px;
+            border-radius: 50%;
+        }
+
         @media (max-width: 768px) {
             .container { flex-direction: column-reverse; }
             .story-container { width: 100%; height: 50%; }
@@ -275,20 +337,24 @@
             .chapter { min-height: auto; padding: 40px 20px; }
             .header-section h1 { font-size: 1.5em; }
         }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--pin-color); }
+            70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Left Side: Story Feed -->
     <div class="story-container" id="story-feed">
         <div class="header-section">
-            <img src="https://corpus.prozhito.org/pictures/persons/268/preview_140x175.png?1714508225" alt="Софья Аверичева" class="profile-photo">
+            <img src="https://corpus.prozhito.org/pictures/persons/268/preview_140x175.png?1.714508225e+09" alt="Софья Аверичева" class="profile-photo">
             
             <h1>Дневник Разведчицы</h1>
             <p>Боевой путь Аверичевой Софьи Петровны<br>1942–1943<br>Работа: Валеевой Алтынай</p>
 
-            <!-- TOGGLE SWITCH -->
             <div class="theme-switch-wrapper">
                 <label class="theme-switch" for="checkbox">
                     <input type="checkbox" id="checkbox" />
@@ -299,16 +365,14 @@
         </div>
 
         <div id="chapters-wrapper"></div>
-        <div style="height: 50vh;"></div> <!-- Spacer at bottom -->
+        <div style="height: 50vh;"></div>
     </div>
 
-    <!-- Right Side: Map -->
     <div class="map-container">
         <div id="map"></div>
     </div>
 </div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
@@ -316,15 +380,11 @@
     const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
     const currentTheme = localStorage.getItem('theme');
 
-    // 1. Check for saved user preference
     if (currentTheme) {
         document.documentElement.setAttribute('data-theme', currentTheme);
-        if (currentTheme === 'dark') {
-            toggleSwitch.checked = true;
-        }
+        if (currentTheme === 'dark') toggleSwitch.checked = true;
     }
 
-    // 2. Handle Switch Function
     function switchTheme(e) {
         if (e.target.checked) {
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -334,7 +394,6 @@
             localStorage.setItem('theme', 'light');
         }
     }
-
     toggleSwitch.addEventListener('change', switchTheme, false);
 
 
@@ -343,20 +402,23 @@
       {
         "location": "Деревня Никулино",
         "date": "11 июля 1942",
+        "type": "base",
         "quote": "Михаил Голубев и почтальон Саня Травкин повели нас в деревню Никулино",
-        "context": "Место первоначальной дислокации дивизии. Запись отражает период прибытия и обустройства свежих частей на фронте, вхождения в быт войны.",
+        "context": "Место первоначальной дислокации дивизии. Запись отражает период прибытия и обустройства свежих частей на фронте.",
         "coords": [54.60208, 31.55888]
       },
       {
         "location": "Грядозубово",
         "date": "16 июля 1942",
+        "type": "base",
         "quote": "...Докукин вернулся в деревню Грядозубово…",
-        "context": "Эта деревня стала базой для разведроты лейтенанта Докукина. В дневнике она описывается как место передышки между рейдами.",
+        "context": "Эта деревня стала базой для разведроты лейтенанта Докукина. Место передышки между рейдами.",
         "coords": [55.54944, 32.22]
       },
       {
         "location": "Деревня Баушкино",
         "date": "17-18 июля 1942",
+        "type": "move",
         "quote": "Утром, когда подходили к деревне Баушкино…",
         "context": "Находилась в непосредственной близости к передовой. Эпизод описывает взаимодействие армии с местным населением.",
         "coords": [55.60538, 32.33543]
@@ -364,6 +426,7 @@
       {
         "location": "Свитский Мох",
         "date": "24-27 июля 1942",
+        "type": "recon",
         "quote": "«Получено задание: взять контрольного пленного на большаке в районе Свитского Мха...»",
         "context": "Обширный торфяник и болото. Контекст записи мрачный: разведчики идут по местам былых боев.",
         "coords": [55.65, 32.71916]
@@ -371,6 +434,7 @@
       {
         "location": "Деревня Зазерье",
         "date": "5 августа 1942",
+        "type": "battle",
         "quote": "«Занята деревня Зазерье. Бой удалялся. Догорали подорванные танки.»",
         "context": "Описание непосредственного боевого столкновения. Разведчики захватили немецкие укрепления.",
         "coords": [55.03071, 31.16853]
@@ -378,6 +442,7 @@
       {
         "location": "Грядозубово",
         "date": "26 августа 1942",
+        "type": "base",
         "quote": "«Мы снова в деревне Грядозубово.»",
         "context": "Запись построена на контрасте между тяжелой фронтовой работой и коротким домашним уютом.",
         "coords": [55.54944, 32.22]
@@ -385,6 +450,7 @@
       {
         "location": "Деревня Новоселки",
         "date": "28 августа 1942",
+        "type": "recon",
         "quote": "«Неподалеку от нас, около начисто выжженной, не существующей сейчас деревни Новоселки...»",
         "context": "Место для засад. Используя высокую рожь и лес, разведчики охотились на немецкие патрули.",
         "coords": [54.96682, 31.64089]
@@ -392,6 +458,7 @@
       {
         "location": "Грядозубово (Окрестности)",
         "date": "28 августа 1942",
+        "type": "base",
         "quote": "Подходим к деревне Грядозубово. Рома притих, он уже не стонет.",
         "context": "Наблюдательная миссия в лесах. Солдаты лежат на опушке, едят чернику.",
         "coords": [55.54944, 32.22]
@@ -399,6 +466,7 @@
       {
         "location": "Деревня Никулино",
         "date": "1 сентября 1942",
+        "type": "base",
         "quote": "«Нас отзывали в Никулино на отдых.»",
         "context": "Рота вернулась на базу в Никулино. Автор отмечает первый день осени.",
         "coords": [54.60208, 31.55888]
@@ -406,6 +474,7 @@
       {
         "location": "Грядозубово",
         "date": "7 сентября 1942",
+        "type": "base",
         "quote": "7-го сентября появились всей ротой в Грядозубове.",
         "context": "Тревожная запись. Ей подбросили письмо с угрозами от полицая.",
         "coords": [55.54944, 32.22]
@@ -413,6 +482,7 @@
       {
         "location": "Село Рибшево",
         "date": "18 сентября 1942",
+        "type": "move",
         "quote": "«...через Лосево, Алексеевку, село Рибшево до района Николы-Полоши...»",
         "context": "Стратегически важный пункт на границе партизанского края.",
         "coords": [55.42406, 32.1203]
@@ -420,6 +490,7 @@
       {
         "location": "Деревня Борки",
         "date": "20 сентября 1942",
+        "type": "recon",
         "quote": "Вчера днем мы наблюдали за деревней Борки.",
         "context": "Наблюдательная миссия. Разведчики сутками следили за бытом оккупантов.",
         "coords": [55.342043, 31.060239]
@@ -427,6 +498,7 @@
       {
         "location": "Деревня Попково",
         "date": "14 ноября 1942",
+        "type": "move",
         "quote": "«Когда шли через деревню Попково...»",
         "context": "Здесь располагался штаб дивизии. Контекст переключается на внутреннюю жизнь армии.",
         "coords": [55.6464, 32.44588]
@@ -434,6 +506,7 @@
       {
         "location": "Деревня Берлезово",
         "date": "25 февраля 1943",
+        "type": "battle",
         "quote": "«25 февраля в районе деревни Берлезово...»",
         "context": "Канун немецкого отступления. Описываются ожесточенные артдуэли.",
         "coords": [55.65571, 32.56586]
@@ -441,6 +514,7 @@
       {
         "location": "г. Белый",
         "date": "22 марта 1943",
+        "type": "battle",
         "quote": "«Очищена от противника шоссейная дорога от г. Белого...»",
         "context": "Город-крепость немецкой обороны, освобожденный 10 марта 1943 года.",
         "coords": [55.83378, 32.93898]
@@ -458,6 +532,19 @@
         attribution: ''
     }).addTo(map);
 
+    // --- LEGEND CONTROL ---
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML = '<h4>Условные обозначения</h4>';
+        div.innerHTML += '<i style="background: var(--col-battle)"></i> Боевые действия<br>';
+        div.innerHTML += '<i style="background: var(--col-recon)"></i> Разведка / Рейды<br>';
+        div.innerHTML += '<i style="background: var(--col-base)"></i> База / Отдых<br>';
+        div.innerHTML += '<i style="background: var(--col-move)"></i> Перемещение / Штаб<br>';
+        return div;
+    };
+    legend.addTo(map);
+
 
     // --- RENDER CONTENT ---
     const chaptersWrapper = document.getElementById('chapters-wrapper');
@@ -473,22 +560,28 @@
         smoothFactor: 1
     }).addTo(map);
 
-    // 1. Icon Functions 
-    function createInactiveIcon() {
+    // 1. Icon Functions
+    function createInactiveIcon(type) {
         return L.divIcon({
             className: 'custom-pin',
-            html: '<div style="background-color: #666; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>',
+            html: `<div class="marker-pin pin-${type}"></div>`,
             iconSize: [16, 16],
             iconAnchor: [8, 8]
         });
     }
 
-    function createActiveNumberedIcon(number) {
+    function createActiveNumberedIcon(number, type) {
+        let colorVar = 'var(--accent-color)';
+        if (type === 'battle') colorVar = 'var(--col-battle)';
+        if (type === 'base') colorVar = 'var(--col-base)';
+        if (type === 'recon') colorVar = 'var(--col-recon)';
+        if (type === 'move') colorVar = 'var(--col-move)';
+
         return L.divIcon({
             className: 'custom-pin-active',
-            html: `<div class="number-badge">${number}</div>`,
-            iconSize: [28, 28], 
-            iconAnchor: [14, 14]
+            html: `<div class="number-badge" style="--pin-color: ${colorVar}">${number}</div>`,
+            iconSize: [30, 30], 
+            iconAnchor: [15, 15]
         });
     }
 
@@ -498,8 +591,18 @@
         const chapterDiv = document.createElement('div');
         chapterDiv.className = 'chapter';
         chapterDiv.id = 'chapter-' + index;
+        
+        let catName = "";
+        if(entry.type === 'battle') catName = "БОЙ";
+        if(entry.type === 'recon') catName = "РАЗВЕДКА";
+        if(entry.type === 'base') catName = "БАЗА";
+        if(entry.type === 'move') catName = "ПУТЬ";
+
         chapterDiv.innerHTML = `
-            <span class="date-badge">${entry.date}</span>
+            <div>
+                <span class="date-badge">${entry.date}</span>
+                <span class="category-tag">${catName}</span>
+            </div>
             <h2 class="location-title">${entry.location}</h2>
             <div class="quote-box">${entry.quote}</div>
             <p class="context-text">${entry.context}</p>
@@ -507,17 +610,17 @@
         chaptersWrapper.appendChild(chapterDiv);
 
         // 2. Create Map Marker
-        const marker = L.marker(entry.coords, {icon: createInactiveIcon()}).addTo(map);
+        const marker = L.marker(entry.coords, {icon: createInactiveIcon(entry.type)}).addTo(map);
         
-        // Add permanent label
+        // Add permanent label (Updated Offset to clear marker)
         marker.bindTooltip(entry.location, {
             permanent: true, 
             direction: 'right', 
             className: 'map-label',
-            offset: [10, 0]
+            offset: [22, 0] 
         });
 
-        markers.push(marker);
+        markers.push({marker: marker, type: entry.type});
     });
 
     // --- INTERACTION LOGIC ---
@@ -530,7 +633,7 @@
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const id = entry.target.id.split('-')[1]; // Get index
+                const id = entry.target.id.split('-')[1]; 
                 activateChapter(parseInt(id));
             }
         });
@@ -546,15 +649,13 @@
         document.getElementById('chapter-' + index).classList.add('active');
 
         // 2. Update Map Markers
-        markers.forEach((m, i) => {
+        markers.forEach((item, i) => {
             if (i === index) {
-                // Active Marker gets a Number
-                m.setIcon(createActiveNumberedIcon(index + 1));
-                m.setZIndexOffset(1000);
+                item.marker.setIcon(createActiveNumberedIcon(index + 1, item.type));
+                item.marker.setZIndexOffset(1000);
             } else {
-                // Inactive Marker reverts to Dot
-                m.setIcon(createInactiveIcon());
-                m.setZIndexOffset(0);
+                item.marker.setIcon(createInactiveIcon(item.type));
+                item.marker.setZIndexOffset(0);
             }
         });
 
@@ -571,14 +672,6 @@
     }
 
 </script>
-
-<style>
-    @keyframes pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); }
-        70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
-    }
-</style>
 
 </body>
 </html>
